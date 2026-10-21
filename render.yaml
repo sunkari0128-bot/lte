@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: saikiran-bullion
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: GOLDAPI_KEY
+        sync: false

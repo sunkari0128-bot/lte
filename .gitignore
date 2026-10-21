@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production builds
+dist/
+build/
+android/app/build/
+android/.gradle/
+android/build/
+android/app/src/main/assets/public/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Root binary files (keep downloads/ folder)
+/*.apk
+/*.aab
+
+# Database (optional - uncomment if you want clean db on cloud)
+# data/gold_bullion.sqlite

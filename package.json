@@ -1,0 +1,49 @@
+{
+  "name": "gold-bullion-rates",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently -k \"npm run server\" \"npm run client\"",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node server/index.js",
+    "client": "vite",
+    "start": "node server/index.js",
+    "cap:sync": "vite build && npx cap sync android",
+    "build:apk": "npm run cap:sync && cd android && .\\gradlew.bat assembleDebug",
+    "build:aab": "npm run cap:sync && cd android && .\\gradlew.bat bundleRelease",
+    "build:both": "node scripts/build-both-apps.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@capacitor/android": "7.6.9",
+    "@capacitor/core": "7.6.9",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "lucide-react": "^1.52.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "sql.js": "^1.14.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.6.9",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.6.1",
+    "concurrently": "^9.2.4",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^6.4.3"
+  }
+}

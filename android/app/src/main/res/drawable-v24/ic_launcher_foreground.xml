@@ -1,0 +1,52 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Outer gold circle glow -->
+    <path
+        android:fillColor="#22D4AF37"
+        android:pathData="M54,20 A34,34 0 1,1 53.9,20 Z" />
+
+    <!-- Gold coin ring accent -->
+    <path
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="1.8"
+        android:pathData="M54,24 A30,30 0 1,1 53.9,24 Z" />
+
+    <!-- Rear Ingot: Top Facet -->
+    <path
+        android:fillColor="#F3E5AB"
+        android:pathData="M38,40 L70,40 L64,46 L32,46 Z" />
+
+    <!-- Rear Ingot: Front Facet -->
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M32,46 L64,46 L62,56 L30,56 Z" />
+
+    <!-- Rear Ingot: Right Side Facet -->
+    <path
+        android:fillColor="#AA820A"
+        android:pathData="M64,46 L70,40 L68,50 L62,56 Z" />
+
+    <!-- Front Ingot: Top Facet -->
+    <path
+        android:fillColor="#FFF4D0"
+        android:pathData="M44,54 L76,54 L70,60 L38,60 Z" />
+
+    <!-- Front Ingot: Front Facet -->
+    <path
+        android:fillColor="#E5C158"
+        android:pathData="M38,60 L70,60 L68,74 L36,74 Z" />
+
+    <!-- Front Ingot: Right Side Facet -->
+    <path
+        android:fillColor="#C69214"
+        android:pathData="M70,60 L76,54 L74,68 L68,74 Z" />
+
+    <!-- Ingot Hallmark Bar -->
+    <path
+        android:fillColor="#8C6605"
+        android:pathData="M46,65 L62,65 L61.5,67 L45.5,67 Z" />
+</vector>
