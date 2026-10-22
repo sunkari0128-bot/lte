@@ -564,22 +564,8 @@ export async function fetchTodayRates(forceLive = false): Promise<TodayRatesResp
   const existingTodayRecord = allRecords.find((r) => r.date === todayStr) || allRecords[0];
   const prevRecord = allRecords.find((r) => r.date < (existingTodayRecord?.date || todayStr)) || allRecords[1] || null;
 
-  // 4. If server responded
+  // 4. If server responded, use server data as the single unified source of truth
   if (serverData) {
-    // If admin has set custom selling rates locally, strictly preserve them
-    if (customOverride && customOverride.gold_24k_selling_per_gram) {
-      serverData.today.gold_24k_selling_per_gram = customOverride.gold_24k_selling_per_gram;
-      serverData.today.gold_22k_selling_per_gram = customOverride.gold_22k_selling_per_gram;
-      serverData.today.silver_selling_per_gram = customOverride.silver_selling_per_gram;
-      serverData = buildTodayPayload(
-        serverData.today,
-        serverData.previous,
-        serverData.isLive,
-        serverData.liveSource,
-        serverData.isDelayed,
-        serverData.delayedNote
-      );
-    }
     localStorage.setItem(STORAGE_KEY_TODAY, JSON.stringify(serverData));
     return serverData;
   }

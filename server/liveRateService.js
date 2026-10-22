@@ -338,8 +338,9 @@ async function fetchLiveBullionRates(db = null) {
 
 /**
  * Sync live rate into database for today's record
+ * @param {boolean} forceOverwriteSelling - When false, preserves custom selling prices set by admin
  */
-async function syncLiveRatesToDb(db, queryOne, runQuery, liveData = null) {
+async function syncLiveRatesToDb(db, queryOne, runQuery, liveData = null, forceOverwriteSelling = false) {
   const live = liveData || await fetchLiveBullionRates(db);
   const todayStr = new Date().toISOString().split('T')[0];
   const nowIso = live.updatedAt || new Date().toISOString();
@@ -350,6 +351,13 @@ async function syncLiveRatesToDb(db, queryOne, runQuery, liveData = null) {
   const g18s = Math.round(live.rates.gold_24k_selling_per_gram * 0.75);
 
   if (existing) {
+    // Preserve custom selling prices set by admin unless explicitly forced
+    const keepSelling = !forceOverwriteSelling && existing.gold_24k_selling_per_gram && existing.gold_24k_selling_per_gram > 0;
+    const final24s = keepSelling ? existing.gold_24k_selling_per_gram : live.rates.gold_24k_selling_per_gram;
+    const final22s = keepSelling ? existing.gold_22k_selling_per_gram : live.rates.gold_22k_selling_per_gram;
+    const finalSilvS = keepSelling ? existing.silver_selling_per_gram : live.rates.silver_selling_per_gram;
+    const final18s = keepSelling && existing.gold_18k_selling_per_gram ? existing.gold_18k_selling_per_gram : g18s;
+
     runQuery(
       db,
       `UPDATE gold_rates 
@@ -365,13 +373,13 @@ async function syncLiveRatesToDb(db, queryOne, runQuery, liveData = null) {
        WHERE date = ?`,
       [
         live.rates.gold_24k_market_per_gram,
-        live.rates.gold_24k_selling_per_gram,
+        final24s,
         live.rates.gold_22k_market_per_gram,
-        live.rates.gold_22k_selling_per_gram,
+        final22s,
         g18m,
-        g18s,
+        final18s,
         live.rates.silver_market_per_gram,
-        live.rates.silver_selling_per_gram,
+        finalSilvS,
         nowIso,
         todayStr
       ]

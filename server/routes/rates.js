@@ -24,7 +24,8 @@ router.post('/sync-live', async (req, res) => {
   try {
     const db = await getDatabase();
     const live = await fetchLiveBullionRates(db);
-    const result = await syncLiveRatesToDb(db, queryOne, runQuery, live);
+    // Explicit sync-live allows recalculating selling rates
+    const result = await syncLiveRatesToDb(db, queryOne, runQuery, live, true);
     return res.json({
       success: true,
       ...result
@@ -44,7 +45,8 @@ router.get('/today', async (req, res) => {
     const live = await fetchLiveBullionRates(db);
 
     try {
-      await syncLiveRatesToDb(db, queryOne, runQuery, live);
+      // Auto-sync updates market spot in DB while preserving admin's custom selling rates
+      await syncLiveRatesToDb(db, queryOne, runQuery, live, false);
     } catch (syncErr) {
       console.warn('Auto live sync to DB warning:', syncErr.message);
     }
