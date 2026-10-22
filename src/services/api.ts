@@ -23,7 +23,7 @@ export function setStoredApiUrl(url: string): void {
   }
 }
 
-export const DEFAULT_ONLINE_API_URL = 'https://0d087e90024afa.lhr.life/api';
+export const DEFAULT_ONLINE_API_URL = 'https://lte-a2o2.onrender.com/api';
 
 export function getApiBaseUrl(): string {
   const customUrl = getStoredApiUrl();

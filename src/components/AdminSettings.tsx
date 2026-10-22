@@ -278,34 +278,34 @@ export const AdminSettings: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-              <span className="text-xs font-bold text-white uppercase tracking-wider">Active Public Online Server:</span>
+              <span className="text-xs font-bold text-white uppercase tracking-wider">Permanent Free 24/7 Cloud Server (Render):</span>
             </div>
             <a 
-              href="https://0d087e90024afa.lhr.life" 
+              href="https://lte-a2o2.onrender.com" 
               target="_blank" 
               rel="noreferrer"
               className="text-xs font-mono font-bold text-[#F5DE88] hover:underline flex items-center gap-1"
             >
-              <span>https://0d087e90024afa.lhr.life</span>
+              <span>https://lte-a2o2.onrender.com</span>
               <Globe className="w-3.5 h-3.5" />
             </a>
           </div>
           <p className="text-[11px] text-gray-400 leading-relaxed">
-            Anyone worldwide can open this link on their phone or browser. When you change or update rates online, the rates sync instantly to all customer devices and mobile apps!
+            Your server is officially LIVE on Render! Anyone worldwide can open this link on their phone or computer. When you change or update rates online, they sync instantly across all customer devices and mobile apps!
           </p>
           <div className="pt-1 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => {
-                setServerUrl('https://0d087e90024afa.lhr.life/api');
-                setStoredApiUrl('https://0d087e90024afa.lhr.life/api');
-                setServerStatus({ success: true, message: 'Connected to Active Online Server: https://0d087e90024afa.lhr.life/api' });
+                setServerUrl('https://lte-a2o2.onrender.com/api');
+                setStoredApiUrl('https://lte-a2o2.onrender.com/api');
+                setServerStatus({ success: true, message: 'Connected to Permanent Render Server: https://lte-a2o2.onrender.com/api' });
                 setTimeout(() => setServerStatus(null), 4000);
               }}
               className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Use This Active Online Link</span>
+              <span>Use Permanent Render Server</span>
             </button>
           </div>
         </div>
