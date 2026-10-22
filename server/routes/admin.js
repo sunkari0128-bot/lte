@@ -161,6 +161,7 @@ router.post('/rates', requireAdminAuth, async (req, res) => {
     db.run("INSERT OR REPLACE INTO system_settings (key, value) VALUES ('lastUpdatedBy', ?)", [req.admin.username]);
 
     saveDbToDisk();
+    clearLiveRateCache();
 
     const savedRecord = queryOne(db, "SELECT * FROM gold_rates WHERE date = ?", [date]);
 
@@ -227,6 +228,7 @@ router.put('/rates/:id', requireAdminAuth, async (req, res) => {
     stmt.free();
 
     saveDbToDisk();
+    clearLiveRateCache();
 
     const updated = queryOne(db, "SELECT * FROM gold_rates WHERE id = ?", [id]);
     return res.json({
@@ -255,6 +257,7 @@ router.delete('/rates/:id', requireAdminAuth, async (req, res) => {
     stmt.free();
 
     saveDbToDisk();
+    clearLiveRateCache();
 
     return res.json({
       success: true,
@@ -326,6 +329,7 @@ router.put('/settings', requireAdminAuth, async (req, res) => {
     }
 
     saveDbToDisk();
+    clearLiveRateCache();
 
     return res.json({
       success: true,
@@ -365,6 +369,7 @@ router.put('/change-password', requireAdminAuth, async (req, res) => {
     stmt.free();
 
     saveDbToDisk();
+    clearLiveRateCache();
 
     return res.json({
       success: true,

@@ -73,7 +73,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
       }
 
       const todayStr = rateData?.today?.date || new Date().toISOString().split('T')[0];
-      await saveGoldRates({
+      const res = await saveGoldRates({
         date: todayStr,
         gold_24k_market_per_gram: rateData?.today?.gold_24k_market_per_gram || 14918,
         gold_24k_selling_per_gram: s24,
@@ -83,12 +83,12 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
         silver_selling_per_gram: sSilv
       });
 
-      setQuickSaveMsg('Our selling rates successfully updated! Customers will now see these rates.');
+      setQuickSaveMsg(res.message || 'Our selling rates successfully updated! Customers will now see these rates.');
       setRefreshListTrigger((prev) => prev + 1);
       onRatesUpdated();
-      setTimeout(() => setQuickSaveMsg(null), 4000);
+      setTimeout(() => setQuickSaveMsg(null), 5000);
     } catch (err: any) {
-      setQuickSaveMsg('Failed to update selling rates: ' + (err.message || 'Error'));
+      setQuickSaveMsg('Error: ' + (err.message || 'Failed to update selling rates'));
     } finally {
       setIsSavingQuick(false);
     }
@@ -319,8 +319,18 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
             </div>
 
             {quickSaveMsg && (
-              <div className="mb-4 p-3 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              <div
+                className={`mb-4 p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                  quickSaveMsg.startsWith('Error')
+                    ? 'bg-rose-950/80 border-rose-500/50 text-rose-300'
+                    : 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
+                }`}
+              >
+                {quickSaveMsg.startsWith('Error') ? (
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                )}
                 <span>{quickSaveMsg}</span>
               </div>
             )}

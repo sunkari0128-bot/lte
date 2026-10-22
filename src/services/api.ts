@@ -11,7 +11,18 @@ import {
 } from '../types';
 
 export function getStoredApiUrl(): string {
-  return localStorage.getItem('bullion_api_url') || '';
+  const url = localStorage.getItem('bullion_api_url') || '';
+  if (
+    url.includes('192.168.') ||
+    url.includes('.lhr.life') ||
+    url.includes('.loca.lt') ||
+    url.includes('10.0.2.2') ||
+    url.includes('localhost')
+  ) {
+    localStorage.removeItem('bullion_api_url');
+    return '';
+  }
+  return url;
 }
 
 export function setStoredApiUrl(url: string): void {
@@ -33,21 +44,13 @@ export function getApiBaseUrl(): string {
   if (import.meta.env.VITE_API_URL) {
     return (import.meta.env.VITE_API_URL as string).replace(/\/+$/, '');
   }
-  const isCapacitor = typeof window !== 'undefined' && Boolean(
-    (window as any).Capacitor?.isNativePlatform?.() ||
-    window.location.protocol === 'capacitor:' ||
-    (window.location.hostname === 'localhost' && !window.location.port)
-  );
-  if (isCapacitor) {
-    // Return the online public API endpoint so app works everywhere on mobile data
-    return DEFAULT_ONLINE_API_URL;
-  }
-  return '/api';
+  // Connect directly to live Render cloud backend for all devices (native mobile APK & web)
+  return DEFAULT_ONLINE_API_URL;
 }
 
 function getAuthHeader(): Record<string, string> {
   const token = localStorage.getItem('admin_token');
-  if (token) {
+  if (token && !token.startsWith('offline-demo-admin-token')) {
     return { Authorization: `Bearer ${token}` };
   }
   return {};
@@ -531,7 +534,7 @@ export async function fetchTodayRates(forceLive = false): Promise<TodayRatesResp
   if (base) {
     try {
       const url = base.startsWith('http') ? `${base}/rates/today` : `${base}/rates/today`;
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(4000) });
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(15000) });
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {
@@ -632,7 +635,7 @@ export async function fetchRateHistory(range: HistoryRange = '30d'): Promise<{
   if (base) {
     try {
       const url = base.startsWith('http') ? `${base}/rates/history?range=${range}` : `${base}/rates/history?range=${range}`;
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(4000) });
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(15000) });
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {
@@ -721,7 +724,7 @@ export async function fetchSettings(): Promise<BusinessSettings> {
       if (token) {
         const adminRes = await fetch(`${base}/admin/settings`, {
           headers: { ...getAuthHeader() },
-          signal: AbortSignal.timeout(4000)
+          signal: AbortSignal.timeout(15000)
         });
         if (adminRes.ok) {
           const adminJson = await adminRes.json();
@@ -732,7 +735,7 @@ export async function fetchSettings(): Promise<BusinessSettings> {
         }
       }
       const url = base.startsWith('http') ? `${base}/rates/settings` : `${base}/rates/settings`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+      const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {
@@ -764,35 +767,50 @@ export async function loginAdmin(username: string, password: string): Promise<Ad
   const cleanPassword = (password || '').trim();
   const customPwd = localStorage.getItem('admin_custom_password');
 
-  const isMasterPassword =
-    cleanPassword === 'admin@gold2026' ||
-    cleanPassword === 'admin123' ||
-    (customPwd && cleanPassword === customPwd);
-
   const base = getApiBaseUrl();
+  let serverAuthAttempted = false;
+  let serverAuthError: string | null = null;
+
   if (base) {
+    serverAuthAttempted = true;
     try {
       const url = base.startsWith('http') ? `${base}/admin/login` : `${base}/admin/login`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: cleanUsername, password: cleanPassword }),
-        signal: AbortSignal.timeout(2500)
+        signal: AbortSignal.timeout(30000) // 30s timeout to allow Render free tier wake from idle
       });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.token) {
-          localStorage.setItem('admin_token', json.token);
-          localStorage.setItem('admin_username', json.username || 'admin');
-          return json;
-        }
+
+      const json = await res.json();
+      if (res.ok && json.success && json.token) {
+        localStorage.setItem('admin_token', json.token);
+        localStorage.setItem('admin_username', json.username || cleanUsername);
+        return {
+          success: true,
+          token: json.token,
+          username: json.username || cleanUsername,
+          message: 'Authenticated successfully with Saikiran Bullion Cloud Server'
+        };
+      } else {
+        // If server explicitly responded with invalid credentials, do not generate fake offline token
+        return {
+          success: false,
+          message: json.error || 'Invalid administrator username or password.'
+        };
       }
     } catch (e: any) {
-      console.warn('Backend server auth unavailable, falling back to local credentials:', e);
+      console.warn('Backend server auth network timeout/error:', e);
+      serverAuthError = e.message || 'Server timeout';
     }
   }
 
-  // Seamless standalone / offline login for app on mobile
+  // Only fallback to offline demo if server was completely unreachable (airplane mode)
+  const isMasterPassword =
+    cleanPassword === 'admin@gold2026' ||
+    cleanPassword === 'admin123' ||
+    (customPwd && cleanPassword === customPwd);
+
   if (cleanUsername.toLowerCase() === 'admin' && (isMasterPassword || cleanPassword.length >= 4)) {
     const offlineToken = 'offline-demo-admin-token-' + Date.now();
     localStorage.setItem('admin_token', offlineToken);
@@ -801,13 +819,13 @@ export async function loginAdmin(username: string, password: string): Promise<Ad
       success: true,
       token: offlineToken,
       username: 'admin',
-      message: 'Authenticated successfully'
+      message: 'Logged in (Local Device Mode - connect to server to sync with customers)'
     };
   }
 
   return {
     success: false,
-    message: 'Invalid administrator credentials. Please check your username and password.'
+    message: serverAuthError ? `Cannot reach cloud server: ${serverAuthError}` : 'Invalid administrator credentials. Please check your username and password.'
   };
 }
 
@@ -815,13 +833,20 @@ export async function checkAdminAuth(): Promise<{ authenticated: boolean; userna
   const token = localStorage.getItem('admin_token');
   if (!token) return { authenticated: false };
 
+  // If token is an offline fake demo token, purge it so admin logs in cleanly to the real cloud server
+  if (token.startsWith('offline-demo-admin-token')) {
+    console.warn('Purging obsolete offline token from storage to force clean cloud auth.');
+    localStorage.removeItem('admin_token');
+    return { authenticated: false };
+  }
+
   const base = getApiBaseUrl();
   if (base) {
     try {
       const url = base.startsWith('http') ? `${base}/admin/me` : `${base}/admin/me`;
       const res = await fetch(url, {
         headers: { ...getAuthHeader() },
-        signal: AbortSignal.timeout(4000)
+        signal: AbortSignal.timeout(15000)
       });
       if (res.ok) {
         const json = await res.json();
@@ -829,16 +854,15 @@ export async function checkAdminAuth(): Promise<{ authenticated: boolean; userna
           authenticated: json.authenticated,
           username: json.username
         };
+      } else if (res.status === 401) {
+        console.warn('Admin token expired on cloud server. Clearing session.');
+        localStorage.removeItem('admin_token');
+        return { authenticated: false };
       }
     } catch (e) {
-      if (token.startsWith('offline-demo-admin-token')) {
-        return { authenticated: true, username: 'admin' };
-      }
+      console.warn('Network check for admin auth timed out:', e);
+      return { authenticated: true, username: localStorage.getItem('admin_username') || 'admin' };
     }
-  }
-
-  if (token.startsWith('offline-demo-admin-token')) {
-    return { authenticated: true, username: 'admin' };
   }
 
   return { authenticated: true, username: localStorage.getItem('admin_username') || 'admin' };
@@ -865,6 +889,14 @@ export async function saveGoldRates(ratesData: {
   gold_18k_selling_per_gram?: number;
 }): Promise<{ success: boolean; message: string; data?: GoldRateRecord }> {
   const base = getApiBaseUrl();
+  const token = localStorage.getItem('admin_token');
+
+  // Verify that admin is not holding an invalid or fake offline token
+  if (!token || token.startsWith('offline-demo-admin-token')) {
+    localStorage.removeItem('admin_token');
+    throw new Error('Please log in with administrator credentials (admin@gold2026) to sync rates to the cloud server.');
+  }
+
   let serverRecord: GoldRateRecord | null = null;
 
   if (base) {
@@ -877,15 +909,23 @@ export async function saveGoldRates(ratesData: {
           ...getAuthHeader(),
         },
         body: JSON.stringify(ratesData),
-        signal: AbortSignal.timeout(4000)
+        signal: AbortSignal.timeout(25000) // 25s timeout
       });
+
+      if (res.status === 401) {
+        localStorage.removeItem('admin_token');
+        throw new Error('Admin session expired (401). Please log in again to sync rates with the server.');
+      }
 
       const json = await res.json();
       if (res.ok && json.success) {
         serverRecord = json.data;
+      } else {
+        throw new Error(json.error || `Server error (${res.status}): Failed to save rates on cloud server.`);
       }
     } catch (e: any) {
-      console.warn('Network save failed, saving to local device storage:', e);
+      console.error('Failed to sync rates to cloud server:', e);
+      throw new Error(e.message || 'Could not connect to cloud server. Rates were NOT synced to customers.');
     }
   }
 
@@ -925,7 +965,7 @@ export async function saveGoldRates(ratesData: {
 
   return {
     success: true,
-    message: `Rates for ${ratesData.date} successfully recorded and saved!`,
+    message: `Rates for ${ratesData.date} successfully published and synced to cloud server!`,
     data: targetRecord
   };
 }
@@ -935,6 +975,13 @@ export async function updateGoldRateRecord(
   ratesData: Partial<GoldRateRecord>
 ): Promise<{ success: boolean; message: string; data?: GoldRateRecord }> {
   const base = getApiBaseUrl();
+  const token = localStorage.getItem('admin_token');
+
+  if (!token || token.startsWith('offline-demo-admin-token')) {
+    localStorage.removeItem('admin_token');
+    throw new Error('Please log in with administrator credentials (admin@gold2026) to sync rates to the cloud server.');
+  }
+
   let serverRecord: GoldRateRecord | null = null;
 
   if (base) {
@@ -947,15 +994,23 @@ export async function updateGoldRateRecord(
           ...getAuthHeader(),
         },
         body: JSON.stringify(ratesData),
-        signal: AbortSignal.timeout(4000)
+        signal: AbortSignal.timeout(25000)
       });
+
+      if (res.status === 401) {
+        localStorage.removeItem('admin_token');
+        throw new Error('Admin session expired (401). Please log in again to update rates.');
+      }
 
       const json = await res.json();
       if (res.ok && json.success) {
         serverRecord = json.data;
+      } else {
+        throw new Error(json.error || `Server error (${res.status}): Failed to update rate record.`);
       }
     } catch (e: any) {
-      console.warn('Network update failed, updating locally:', e);
+      console.error('Network update failed:', e);
+      throw new Error(e.message || 'Could not connect to cloud server. Rate record was not updated.');
     }
   }
 
@@ -1007,7 +1062,7 @@ export async function updateGoldRateRecord(
 
   return {
     success: true,
-    message: `Record for ${updatedRecord.date} updated successfully!`,
+    message: `Record for ${updatedRecord.date} updated and synced to cloud server!`,
     data: updatedRecord
   };
 }
@@ -1019,7 +1074,7 @@ export async function fetchAdminAllRates(): Promise<GoldRateRecord[]> {
       const url = base.startsWith('http') ? `${base}/admin/rates` : `${base}/admin/rates`;
       const res = await fetch(url, {
         headers: { ...getAuthHeader() },
-        signal: AbortSignal.timeout(4000)
+        signal: AbortSignal.timeout(15000)
       });
       if (res.ok) {
         const json = await res.json();
@@ -1044,7 +1099,7 @@ export async function deleteRateRecord(id: number): Promise<{ success: boolean; 
       await fetch(url, {
         method: 'DELETE',
         headers: { ...getAuthHeader() },
-        signal: AbortSignal.timeout(4000)
+        signal: AbortSignal.timeout(15000)
       });
     } catch (e: any) {
       console.warn('Network delete failed, deleting locally:', e);

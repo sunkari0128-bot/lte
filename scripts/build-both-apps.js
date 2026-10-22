@@ -103,6 +103,7 @@ function copyArtifacts(targetPrefix) {
 async function buildAll() {
   cleanWebOutputDir();
   process.env.VITE_ONLINE_API_URL = 'https://lte-a2o2.onrender.com/api';
+  process.env.VITE_API_URL = 'https://lte-a2o2.onrender.com/api';
 
   console.log('====================================================');
   console.log('STEP 1: BUILDING CUSTOMER APP (NO ADMIN PORTAL)');

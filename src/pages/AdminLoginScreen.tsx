@@ -27,22 +27,10 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
       if (res.success && res.username) {
         onLoginSuccess(res.username);
       } else {
-        const cleanUser = username.trim().toLowerCase();
-        const cleanPass = password.trim();
-        if (cleanUser === 'admin' && (cleanPass === 'admin@gold2026' || cleanPass === 'admin123')) {
-          onLoginSuccess('admin');
-        } else {
-          setError(res.error || res.message || 'Invalid administrator credentials.');
-        }
+        setError(res.message || 'Invalid administrator username or password.');
       }
     } catch (err: any) {
-      const cleanUser = username.trim().toLowerCase();
-      const cleanPass = password.trim();
-      if (cleanUser === 'admin' && (cleanPass === 'admin@gold2026' || cleanPass === 'admin123')) {
-        onLoginSuccess('admin');
-      } else {
-        setError('Unable to authenticate. Please check your credentials.');
-      }
+      setError(err.message || 'Unable to connect to cloud server. Please check internet connection.');
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +124,10 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
               className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#AA820A] hover:from-[#E6C657] hover:to-[#B8901D] text-black font-bold text-sm tracking-wide shadow-gold-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <>
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  <span>Connecting to Cloud Server...</span>
+                </>
               ) : (
                 <>
                   <ShieldCheck className="w-4 h-4" />
